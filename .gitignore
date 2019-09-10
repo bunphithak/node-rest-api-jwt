@@ -1,9 +1,0 @@
-node_modules/
-.idea
-npm-debug.log
-__privete_resource/*
-dist/
-__logs
-assets/export/pnd/*.pdf
-assets/import/files/*
-/.scannerwork
