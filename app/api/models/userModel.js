@@ -1,8 +1,7 @@
 
 const mongoose = require('mongoose');
 const validator = require('validator');
-const isJS = require('is_js');
-const pbkdf2 = require('pbkdf2');
+const crypto = require('../utilities/utils')
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -35,9 +34,12 @@ const userSchema = new mongoose.Schema({
         type: String,
         require: [true, "Please confirm your password"],
         validate: {
-            validator: (el) => el === this.password
-        },
-        message: 'Passwords are not the same!'
+            // This only works on CREATE and SAVE!!!
+            validator: function (el) {
+                return el === this.password;
+            },
+            message: 'Passwords are not the same!'
+        }
     },
     passwordChangeAt: Date,
     passwordResetToken: String,
@@ -49,27 +51,26 @@ const userSchema = new mongoose.Schema({
     }
 })
 
-userSchema.pre('save', async (next) => {
+userSchema.pre('save', async function (next){
     // Only run this function if password was actually modified
     if (!this.isModified('password')) return next();
 
     // Hash the password with cost of 12
-    const hashPassword = await pbkdf2.pbkdf2Sync(this.password, 'dasdasdasdasdasdasd', 1, 32, 'sha512');
-    this.password = hashPassword.toString('hex');
+    this.password = await crypto.crypto.cryptoSync(this.password)
 
     // Delete passwordConfirm field
     this.passwordConfirm = undefined;
     next();
 })
 
-userSchema.pre('save', (next) => {
+userSchema.pre('save', function (next){
     if (!this.isModified('password') || this.isNew) return next();
 
     this.passwordChangedAt = Date.now() - 1000;
     next();
 });
 
-userSchema.pre(/^find/, (next) => {
+userSchema.pre(/^find/, function (next) {
     // this points to the current query
     this.find({ active: { $ne: false } });
     next();
@@ -79,9 +80,7 @@ userSchema.methods.correctPassword = async (
     candidatePassword,
     userPassword
 ) => {
-    let hashPassword = pbkdf2.pbkdf2Sync(userPassword, 'dasdasdasdasdasdasd', 1, 32, 'sha512');
-    hashPassword = hashPassword.toString('hex');
-    return isJS.equal(hashPassword, hash);
+    return crypto.crypto.compareSync(candidatePassword, userPassword)
 };
 
 

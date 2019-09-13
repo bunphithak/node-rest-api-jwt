@@ -12,6 +12,7 @@ const xss = require('xss-clean');
 const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
+const errorHandler = require('./app/api/utilities/errorHandler')
 
 const AppError = require('./app/api/utilities/appError');
 
@@ -53,18 +54,18 @@ app.use(xss());
 // Prevent parameter pollution
 app.use(
     hpp({
-      whitelist: [
-        'duration',
-        'ratingsQuantity',
-        'ratingsAverage',
-        'maxGroupSize',
-        'difficulty',
-        'price'
-      ]
+        whitelist: [
+            'duration',
+            'ratingsQuantity',
+            'ratingsAverage',
+            'maxGroupSize',
+            'difficulty',
+            'price'
+        ]
     })
-  );
-  
-  app.use(compression());
+);
+
+app.use(compression());
 
 app.use(
     bodyParser.json(),
@@ -72,6 +73,8 @@ app.use(
         extended: true,
     })
 )
+
+//handleError
 
 // Limit requests from same API
 app.use('/api', limiter);
@@ -90,6 +93,7 @@ function setAppRouting() {
     app.all('*', (req, res, next) => {
         next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
     });
+    app.use(errorHandler)
 }
 
 

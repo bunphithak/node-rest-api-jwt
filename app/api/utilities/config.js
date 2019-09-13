@@ -7,6 +7,8 @@ var env_type = {
 module.exports = {
     env: (process.env.env_type || env_type.REMOTE_DEV).trim(),
     apiPort: 3000,
+    secretKey: 'NODE|JS|JWT!@#$%ASD##',
+    tokenSessionTimeout: 48 * 60 * 60,
 
     databasePath: () => {
         let path = '';
